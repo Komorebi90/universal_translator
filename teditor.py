@@ -24,6 +24,8 @@ class TranslationEditorGUI:
         self.styles = GUIStyles()
         self.handler = ProjectDataHandler()
         
+        print(f"🎯 Inizializzando editor per progetto: {project_name}")
+        
         # Configurazione finestra
         self.styles.configure_window(self.root, f"Editor Traduzione - {project_name}")
         self.root.geometry("1400x800")
@@ -39,12 +41,29 @@ class TranslationEditorGUI:
         self.auto_save_manager = None
         self.recovery_manager = None
         
-        # Setup
+        # Setup in ordine
+        print("🔄 Caricando progetto...")
         self.load_project()
+        
+        print("🔄 Configurando UI...")
         self.setup_ui()
+        
+        print("🔄 Configurando auto-save...")
         self.setup_auto_save()
+        
+        print("🔄 Controllando recovery...")
         self.check_recovery()
+        
+        print("🔄 Caricando capitolo corrente...")
         self.load_current_chapter()
+        
+        print("✅ Editor inizializzato!")
+        
+        # Debug info
+        print(f"📊 Template content: {len(self.template_content)} caratteri")
+        print(f"📚 Capitoli trovati: {len(self.chapters)}")
+        if self.chapters:
+            print(f"📖 Primo capitolo: {self.chapters[0]['title'][:50]}...")
     
     def load_project(self):
         """Carica dati progetto"""
@@ -59,34 +78,154 @@ class TranslationEditorGUI:
         # Carica template content
         template_file = self.project_data['template_file']
         if template_file and template_file.exists():
-            with open(template_file, 'r', encoding='utf-8') as f:
-                self.template_content = f.read()
+            try:
+                with open(template_file, 'r', encoding='utf-8') as f:
+                    self.template_content = f.read()
+                print(f"✅ Template caricato: {len(self.template_content)} caratteri")
+            except Exception as e:
+                print(f"❌ Errore lettura template: {e}")
+                messagebox.showerror("Errore", f"Impossibile leggere template: {e}")
+                return
+        else:
+            print(f"❌ Template file non trovato: {template_file}")
+            messagebox.showerror("Errore", f"File template non trovato: {template_file}")
+            return
         
         # Estrai capitoli
         self.extract_chapters()
+        
+        if not self.chapters:
+            print("❌ Nessun capitolo estratto, provo metodo alternativo")
+            self.extract_chapters_fallback()
     
     def extract_chapters(self):
         """Estrae capitoli dal template"""
-        # Pattern per trovare capitoli
-        chapter_pattern = r'^## ([^#\n]+)\n(.*?)(?=^##|\Z)'
+        print("🔍 Estraendo capitoli dal template...")
+        
+        # Pattern più flessibile per trovare capitoli
+        patterns = [
+            # Pattern principale: ## TITOLO
+            r'^## ([^#\n]+)\n(.*?)(?=^##|\Z)',
+            # Pattern alternativo: # TITOLO  
+            r'^# ([^#\n]+)\n(.*?)(?=^#|\Z)',
+            # Pattern backup: qualsiasi header con contenuto
+            r'^(#{1,3}) ([^#\n]+)\n(.*?)(?=^#{1,3}|\Z)'
+        ]
         
         chapters = []
-        for match in re.finditer(chapter_pattern, self.template_content, re.MULTILINE | re.DOTALL):
-            title = match.group(1).strip()
-            content = match.group(2).strip()
+        
+        for i, pattern in enumerate(patterns):
+            print(f"Tentativo pattern {i+1}...")
+            matches = list(re.finditer(pattern, self.template_content, re.MULTILINE | re.DOTALL))
             
-            # Estrai sezioni originale e traduzione
-            sections = self.parse_chapter_sections(content)
+            if matches:
+                print(f"✅ Trovati {len(matches)} capitoli con pattern {i+1}")
+                
+                for j, match in enumerate(matches):
+                    if len(match.groups()) == 2:
+                        title, content = match.groups()
+                    else:
+                        # Pattern con 3 gruppi (include #)
+                        _, title, content = match.groups()
+                    
+                    title = title.strip()
+                    content = content.strip()
+                    
+                    # Salta capitoli troppo corti (probabilmente header)
+                    if len(content) < 100:
+                        continue
+                    
+                    # Estrai sezioni originale e traduzione
+                    sections = self.parse_chapter_sections(content)
+                    
+                    # Se non trova sezioni, crea una sezione unica
+                    if not sections:
+                        sections = [{
+                            'original_header': 'Testo Completo',
+                            'original_text': content[:2000] + "..." if len(content) > 2000 else content,
+                            'translation_header': 'Traduzione Completa',
+                            'translation_text': '*[Inserisci qui la tua traduzione]*',
+                            'is_placeholder': True
+                        }]
+                    
+                    chapters.append({
+                        'title': title,
+                        'content': content,
+                        'sections': sections,
+                        'start_pos': match.start(),
+                        'end_pos': match.end()
+                    })
+                
+                if chapters:
+                    break  # Se trova capitoli, ferma i tentativi
+        
+        self.chapters = chapters
+        print(f"📚 Capitoli estratti: {len(self.chapters)}")
+        
+        if self.chapters:
+            for i, ch in enumerate(self.chapters):
+                print(f"  {i+1}. {ch['title'][:50]}... ({len(ch['sections'])} sezioni)")
+    
+    def extract_chapters_fallback(self):
+        """Metodo fallback se estrazione normale fallisce"""
+        print("🆘 Usando metodo fallback...")
+        
+        # Dividi per paragrafi e crea capitoli artificiali
+        paragraphs = [p.strip() for p in self.template_content.split('\n\n') if p.strip()]
+        
+        if not paragraphs:
+            print("❌ Nessun paragrafo trovato")
+            return
+        
+        # Raggruppa paragrafi in "capitoli" di ~2000 caratteri
+        current_text = ""
+        chapter_num = 1
+        chapters = []
+        
+        for paragraph in paragraphs:
+            if len(current_text) + len(paragraph) > 2000 and current_text:
+                # Crea capitolo
+                sections = [{
+                    'original_header': 'Testo Completo',
+                    'original_text': current_text,
+                    'translation_header': 'Traduzione Completa', 
+                    'translation_text': '*[Inserisci qui la tua traduzione]*',
+                    'is_placeholder': True
+                }]
+                
+                chapters.append({
+                    'title': f"Sezione {chapter_num}",
+                    'content': current_text,
+                    'sections': sections,
+                    'start_pos': 0,
+                    'end_pos': len(current_text)
+                })
+                
+                chapter_num += 1
+                current_text = paragraph
+            else:
+                current_text += "\n\n" + paragraph if current_text else paragraph
+        
+        # Ultimo capitolo
+        if current_text:
+            sections = [{
+                'original_header': 'Testo Completo',
+                'original_text': current_text,
+                'translation_header': 'Traduzione Completa',
+                'translation_text': '*[Inserisci qui la tua traduzione]*', 
+                'is_placeholder': True
+            }]
             
             chapters.append({
-                'title': title,
-                'content': content,
+                'title': f"Sezione {chapter_num}",
+                'content': current_text,
                 'sections': sections,
-                'start_pos': match.start(),
-                'end_pos': match.end()
+                'start_pos': 0,
+                'end_pos': len(current_text)
             })
         
         self.chapters = chapters
+        print(f"🔄 Capitoli fallback creati: {len(self.chapters)}")
     
     def parse_chapter_sections(self, chapter_content):
         """Estrae sezioni originale e traduzione da un capitolo"""
@@ -340,9 +479,12 @@ class TranslationEditorGUI:
     def load_current_chapter(self):
         """Carica capitolo corrente nell'editor"""
         if not self.chapters:
+            print("❌ Nessun capitolo disponibile")
+            messagebox.showwarning("Attenzione", "Nessun capitolo trovato nel progetto")
             return
         
         chapter = self.chapters[self.current_chapter]
+        print(f"📖 Caricando capitolo: {chapter['title']}")
         
         # Aggiorna combo
         self.chapter_var.set(f"{self.current_chapter + 1}. {chapter['title']}")
@@ -353,38 +495,74 @@ class TranslationEditorGUI:
             section_values = [f"Sezione {i+1}" for i in range(len(sections))]
             self.orig_section_combo['values'] = section_values
             self.orig_section_combo.set("Sezione 1")
+            print(f"📝 Sezioni disponibili: {len(sections)}")
+        else:
+            print("⚠️ Nessuna sezione trovata")
+            self.orig_section_combo['values'] = ["Nessuna sezione"]
+            self.orig_section_combo.set("Nessuna sezione")
         
         # Carica prima sezione
         if sections:
             self.load_section(0)
+        else:
+            # Fallback: mostra tutto il contenuto
+            self.show_full_chapter_content(chapter)
         
         # Aggiorna progress
         self.update_chapter_progress()
     
+    def show_full_chapter_content(self, chapter):
+        """Mostra contenuto completo del capitolo se le sezioni non sono disponibili"""
+        print("🔄 Mostrando contenuto completo del capitolo")
+        
+        # Carica testo originale completo
+        self.original_text.config(state='normal')
+        self.original_text.delete('1.0', 'end')
+        self.original_text.insert('1.0', chapter['content'])
+        self.original_text.config(state='disabled')
+        
+        # Carica traduzione vuota
+        self.translation_text.delete('1.0', 'end')
+        placeholder = "*[Inserisci qui la tua traduzione per tutto il capitolo]*"
+        self.translation_text.insert('1.0', placeholder)
+        
+        # Evidenzia placeholder
+        self.translation_text.tag_add('placeholder', '1.0', 'end')
+        self.translation_text.tag_config('placeholder', foreground='#6c757d', font=(self.styles.font_family, 10, 'italic'))
+    
     def load_section(self, section_index):
         """Carica sezione specifica"""
         if not self.chapters or section_index >= len(self.chapters[self.current_chapter]['sections']):
+            print(f"❌ Sezione {section_index} non valida")
             return
         
         section = self.chapters[self.current_chapter]['sections'][section_index]
+        print(f"📄 Caricando sezione {section_index + 1}")
         
         # Carica testo originale
         self.original_text.config(state='normal')
         self.original_text.delete('1.0', 'end')
-        self.original_text.insert('1.0', section['original_text'])
+        
+        original_text = section.get('original_text', '')
+        if not original_text:
+            original_text = "Testo originale non disponibile"
+        
+        self.original_text.insert('1.0', original_text)
         self.original_text.config(state='disabled')
         
         # Carica traduzione
         self.translation_text.delete('1.0', 'end')
-        translation = section['translation_text']
+        translation = section.get('translation_text', '*[Inserisci qui la tua traduzione]*')
         
         # Evidenzia placeholder
-        if section['is_placeholder']:
+        if section.get('is_placeholder', True):
             self.translation_text.insert('1.0', translation)
             self.translation_text.tag_add('placeholder', '1.0', 'end')
             self.translation_text.tag_config('placeholder', foreground='#6c757d', font=(self.styles.font_family, 10, 'italic'))
         else:
             self.translation_text.insert('1.0', translation)
+        
+        print(f"✅ Sezione caricata: {len(original_text)} caratteri originali")
     
     def on_chapter_change(self, event=None):
         """Gestisce cambio capitolo"""
