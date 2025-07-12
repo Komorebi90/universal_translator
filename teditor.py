@@ -102,53 +102,70 @@ class TranslationEditorGUI:
         """Estrae capitoli dal template"""
         print("🔍 Estraendo capitoli dal template...")
         
-        # Pattern più flessibile per trovare capitoli
+        # Sezioni da ignorare (metadati template)
+        ignore_sections = [
+            'progresso globale', 'note del traduttore', 'note traduttore',
+            'statistiche', 'info progetto', 'tracker', 'glossario',
+            'panoramica', 'overview', 'metadata', 'configurazione'
+        ]
+        
+        # Pattern più specifici per capitoli veri
         patterns = [
-            # Pattern principale: ## TITOLO
+            # Pattern 1: ## CAPITOLO X - Titolo
+            r'^## (CAPITOLO\s+\d+[^#\n]*)\n(.*?)(?=^##|\Z)',
+            # Pattern 2: ## Chapter X - Title  
+            r'^## (Chapter\s+\d+[^#\n]*)\n(.*?)(?=^##|\Z)',
+            # Pattern 3: ## Numero. Titolo
+            r'^## (\d+\.\s*[^#\n]+)\n(.*?)(?=^##|\Z)',
+            # Pattern 4: ## Qualsiasi titolo (ma filtra metadati)
             r'^## ([^#\n]+)\n(.*?)(?=^##|\Z)',
-            # Pattern alternativo: # TITOLO  
-            r'^# ([^#\n]+)\n(.*?)(?=^#|\Z)',
-            # Pattern backup: qualsiasi header con contenuto
-            r'^(#{1,3}) ([^#\n]+)\n(.*?)(?=^#{1,3}|\Z)'
+            # Pattern 5: # Titolo singolo hash
+            r'^# ([^#\n]+)\n(.*?)(?=^#|\Z)'
         ]
         
         chapters = []
         
         for i, pattern in enumerate(patterns):
-            print(f"Tentativo pattern {i+1}...")
+            print(f"🔍 Tentativo pattern {i+1}: {pattern[:30]}...")
             matches = list(re.finditer(pattern, self.template_content, re.MULTILINE | re.DOTALL))
             
             if matches:
-                print(f"✅ Trovati {len(matches)} capitoli con pattern {i+1}")
+                print(f"📋 Trovati {len(matches)} potenziali capitoli")
                 
+                valid_chapters = []
                 for j, match in enumerate(matches):
-                    if len(match.groups()) == 2:
-                        title, content = match.groups()
-                    else:
-                        # Pattern con 3 gruppi (include #)
-                        _, title, content = match.groups()
+                    title = match.group(1).strip()
+                    content = match.group(2).strip()
                     
-                    title = title.strip()
-                    content = content.strip()
+                    # Filtra sezioni da ignorare
+                    title_lower = title.lower()
+                    is_metadata = any(ignore_word in title_lower for ignore_word in ignore_sections)
                     
-                    # Salta capitoli troppo corti (probabilmente header)
-                    if len(content) < 100:
+                    if is_metadata:
+                        print(f"  ⏭️ Saltando sezione metadati: {title[:40]}...")
                         continue
+                    
+                    # Controlla se ha contenuto sostanziale
+                    if len(content) < 200:  # Almeno 200 caratteri
+                        print(f"  ⏭️ Saltando sezione troppo corta: {title[:40]}... ({len(content)} caratteri)")
+                        continue
+                    
+                    # Controlla se contiene testo narrativo vs solo placeholder
+                    placeholder_ratio = content.count('[Inserisci qui') / max(len(content.split()), 1)
+                    if placeholder_ratio > 0.8:  # Troppi placeholder
+                        print(f"  ⏭️ Saltando sezione solo placeholder: {title[:40]}...")
+                        continue
+                    
+                    print(f"  ✅ Capitolo valido: {title[:50]}... ({len(content)} caratteri)")
                     
                     # Estrai sezioni originale e traduzione
                     sections = self.parse_chapter_sections(content)
                     
-                    # Se non trova sezioni, crea una sezione unica
+                    # Se non trova sezioni strutturate, crea sezione unica
                     if not sections:
-                        sections = [{
-                            'original_header': 'Testo Completo',
-                            'original_text': content[:2000] + "..." if len(content) > 2000 else content,
-                            'translation_header': 'Traduzione Completa',
-                            'translation_text': '*[Inserisci qui la tua traduzione]*',
-                            'is_placeholder': True
-                        }]
+                        sections = self.create_single_section(content)
                     
-                    chapters.append({
+                    valid_chapters.append({
                         'title': title,
                         'content': content,
                         'sections': sections,
@@ -156,15 +173,96 @@ class TranslationEditorGUI:
                         'end_pos': match.end()
                     })
                 
-                if chapters:
-                    break  # Se trova capitoli, ferma i tentativi
+                if valid_chapters:
+                    chapters = valid_chapters
+                    print(f"✅ Pattern {i+1} ha trovato {len(chapters)} capitoli validi!")
+                    break  # Usa il primo pattern che trova capitoli validi
+                else:
+                    print(f"❌ Pattern {i+1} non ha trovato capitoli validi")
+        
+        # Se ancora nessun capitolo, prova metodo più aggressivo
+        if not chapters:
+            print("🆘 Nessun capitolo trovato, provo ricerca più ampia...")
+            chapters = self.find_chapters_aggressive()
         
         self.chapters = chapters
-        print(f"📚 Capitoli estratti: {len(self.chapters)}")
+        print(f"📚 Capitoli finali estratti: {len(self.chapters)}")
         
         if self.chapters:
             for i, ch in enumerate(self.chapters):
-                print(f"  {i+1}. {ch['title'][:50]}... ({len(ch['sections'])} sezioni)")
+                print(f"  {i+1}. {ch['title'][:60]}... ({len(ch['sections'])} sezioni)")
+        else:
+            print("❌ ERRORE: Nessun capitolo trovato con nessun metodo!")
+    
+    def create_single_section(self, content):
+        """Crea una singola sezione dal contenuto"""
+        return [{
+            'original_header': 'Testo Completo',
+            'original_text': content,
+            'translation_header': 'Traduzione Completa',
+            'translation_text': '*[Inserisci qui la tua traduzione per questo capitolo]*',
+            'is_placeholder': True
+        }]
+    
+    def find_chapters_aggressive(self):
+        """Metodo più aggressivo per trovare capitoli quando gli altri falliscono"""
+        print("🔍 Ricerca aggressiva capitoli...")
+        
+        # Dividi il contenuto in blocchi grandi e cerca pattern narrativi
+        lines = self.template_content.split('\n')
+        chapters = []
+        current_chapter = ""
+        current_title = ""
+        chapter_num = 1
+        
+        narrative_indicators = [
+            'once upon', 'in the beginning', 'chapter', 'capitolo', 
+            'part', 'parte', 'volume', 'book', 'libro',
+            'era una volta', 'molto tempo fa', 'in un', 'c\'era'
+        ]
+        
+        for line in lines:
+            line = line.strip()
+            
+            # Possibile nuovo capitolo
+            if (line and 
+                (line.startswith('#') or 
+                 any(indicator in line.lower() for indicator in narrative_indicators) or
+                 len(line) < 80 and line.isupper())):
+                
+                # Salva capitolo precedente se aveva contenuto
+                if current_chapter and len(current_chapter) > 500:
+                    sections = self.create_single_section(current_chapter)
+                    chapters.append({
+                        'title': current_title or f"Capitolo {chapter_num}",
+                        'content': current_chapter,
+                        'sections': sections,
+                        'start_pos': 0,
+                        'end_pos': len(current_chapter)
+                    })
+                    chapter_num += 1
+                
+                # Inizia nuovo capitolo
+                current_title = line.replace('#', '').strip() or f"Capitolo {chapter_num}"
+                current_chapter = ""
+            else:
+                # Aggiungi al capitolo corrente
+                if line:
+                    current_chapter += line + "\n"
+        
+        # Ultimo capitolo
+        if current_chapter and len(current_chapter) > 500:
+            sections = self.create_single_section(current_chapter)
+            chapters.append({
+                'title': current_title or f"Capitolo {chapter_num}",
+                'content': current_chapter,
+                'sections': sections,
+                'start_pos': 0,
+                'end_pos': len(current_chapter)
+            })
+        
+        print(f"🔍 Ricerca aggressiva trovata: {len(chapters)} capitoli")
+        return chapters
     
     def extract_chapters_fallback(self):
         """Metodo fallback se estrazione normale fallisce"""
