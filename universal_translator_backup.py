@@ -86,18 +86,18 @@ class UniversalNovelTranslator:
 
     def scan_input_folder(self):
         """Scansiona cartella input per file supportati"""
-        print(f"[SEARCH] Scansione cartella: {self.input_folder}")
+        print(f"🔍 Scansione cartella: {self.input_folder}")
         
         found_files = []
         
         for file_path in self.input_folder.iterdir():
             if file_path.is_file() and file_path.suffix.lower() in self.supported_extensions:
                 found_files.append(file_path)
-                print(f"  [BOOK] Trovato: {file_path.name}")
+                print(f"  📚 Trovato: {file_path.name}")
         
         if not found_files:
-            print("[ERROR] Nessun file PDF/EPUB trovato nella cartella input!")
-            print(f"[TIP] Inserisci file in: {self.input_folder.absolute()}")
+            print("❌ Nessun file PDF/EPUB trovato nella cartella input!")
+            print(f"💡 Inserisci file in: {self.input_folder.absolute()}")
             
         return found_files
 
@@ -136,7 +136,7 @@ class UniversalNovelTranslator:
 
     def extract_pdf_text(self, pdf_path):
         """Estrae testo da PDF"""
-        print(f"[READ] Estraendo testo da PDF: {pdf_path.name}")
+        print(f"📖 Estraendo testo da PDF: {pdf_path.name}")
         
         text_pages = {}
         
@@ -153,15 +153,15 @@ class UniversalNovelTranslator:
                         text_pages[page_num + 1] = cleaned_text
                         
         except Exception as e:
-            print(f"[ERROR] Errore estrazione PDF: {e}")
+            print(f"❌ Errore estrazione PDF: {e}")
             return None
             
-        print(f"[OK] Estratte {len(text_pages)} pagine con contenuto")
+        print(f"✅ Estratte {len(text_pages)} pagine con contenuto")
         return text_pages
 
     def extract_epub_text(self, epub_path):
         """Estrae testo da EPUB"""
-        print(f"[READ] Estraendo testo da EPUB: {epub_path.name}")
+        print(f"📖 Estraendo testo da EPUB: {epub_path.name}")
         
         chapters = {}
         
@@ -174,12 +174,12 @@ class UniversalNovelTranslator:
                 # Trova OPF file
                 rootfile_element = container_root.find('.//{urn:oasis:names:tc:opendocument:xmlns:container}rootfile')
                 if rootfile_element is None:
-                    print("[ERROR] Impossibile trovare rootfile nel container.xml")
+                    print("❌ Impossibile trovare rootfile nel container.xml")
                     return None
                     
                 opf_path = rootfile_element.get('full-path')
                 if opf_path is None:
-                    print("[ERROR] Impossibile trovare full-path nel rootfile")
+                    print("❌ Impossibile trovare full-path nel rootfile")
                     return None
                     
                 opf_content = epub.read(opf_path)
@@ -231,10 +231,10 @@ class UniversalNovelTranslator:
                             continue
                             
         except Exception as e:
-            print(f"[ERROR] Errore estrazione EPUB: {e}")
+            print(f"❌ Errore estrazione EPUB: {e}")
             return None
             
-        print(f"[OK] Estratti {len(chapters)} capitoli")
+        print(f"✅ Estratti {len(chapters)} capitoli")
         return chapters if chapters else None
 
     def clean_text(self, text):
@@ -314,14 +314,14 @@ class UniversalNovelTranslator:
             f.write("*Progetto di traduzione per uso personale*\n\n")
             
             if config.include_progress_tracking:
-                f.write("## [CHART] PROGRESSO GLOBALE\n")
+                f.write("## 📊 PROGRESSO GLOBALE\n")
                 f.write("- [ ] Lettura completa\n")
                 f.write("- [ ] Prima bozza traduzione\n") 
                 f.write("- [ ] Revisione e correzioni\n")
                 f.write("- [ ] Controllo finale\n\n")
             
             if config.include_glossary_hints:
-                f.write("## [NOTE] NOTE DEL TRADUTTORE\n")
+                f.write("## 📝 NOTE DEL TRADUTTORE\n")
                 f.write("*Usa questa sezione per glossario personale, note sui personaggi, terminologia ricorrente, ecc.*\n\n")
             
             f.write("---\n\n")
@@ -347,9 +347,9 @@ class UniversalNovelTranslator:
                     
                     for i, section in enumerate(sections, 1):
                         if config.use_section_dividers:
-                            f.write(f"### [READ] SEZIONE {i}/{total_sections} - TESTO ORIGINALE\n")
+                            f.write(f"### 📖 SEZIONE {i}/{total_sections} - TESTO ORIGINALE\n")
                         else:
-                            f.write(f"### [READ] TESTO ORIGINALE - PARTE {i}\n")
+                            f.write(f"### 📖 TESTO ORIGINALE - PARTE {i}\n")
                         
                         f.write("```\n")
                         f.write(section)
@@ -359,7 +359,7 @@ class UniversalNovelTranslator:
                         f.write("*[Inserisci qui la traduzione di questa sezione]*\n\n")
                         
                         if config.include_notes_section:
-                            f.write(f"### [NOTE] NOTE SEZIONE {i}\n")
+                            f.write(f"### 📝 NOTE SEZIONE {i}\n")
                             f.write("*Note del traduttore, difficoltà, scelte linguistiche, ecc.*\n\n")
                         
                         if config.include_stats:
@@ -367,13 +367,13 @@ class UniversalNovelTranslator:
                             section_words = len(section.split())
                             estimated_time = section_chars // 150
                             
-                            f.write(f"**[CHART] Stats Sezione {i}:** {section_chars:,} caratteri • {section_words:,} parole • ~{estimated_time} min\n\n")
+                            f.write(f"**📊 Stats Sezione {i}:** {section_chars:,} caratteri • {section_words:,} parole • ~{estimated_time} min\n\n")
                         
                         if config.use_section_dividers:
                             f.write("---\n\n")
                 else:
                     # Capitolo intero
-                    f.write("### [READ] TESTO ORIGINALE COMPLETO\n")
+                    f.write("### 📖 TESTO ORIGINALE COMPLETO\n")
                     f.write("```\n")
                     if config.include_full_text:
                         f.write(chapter_text)
@@ -389,7 +389,7 @@ class UniversalNovelTranslator:
                     f.write("*[Inserisci qui la tua traduzione completa]*\n\n")
                     
                     if config.include_notes_section:
-                        f.write("### [NOTE] NOTE CAPITOLO\n")
+                        f.write("### 📝 NOTE CAPITOLO\n")
                         f.write("*Note del traduttore per questo capitolo*\n\n")
                 
                 # Statistiche finali capitolo
@@ -397,7 +397,7 @@ class UniversalNovelTranslator:
                     word_count = len(chapter_text.split())
                     estimated_time = char_count // 150
                     
-                    f.write("### [CHART] STATISTICHE CAPITOLO\n")
+                    f.write("### 📊 STATISTICHE CAPITOLO\n")
                     f.write(f"- **Caratteri totali:** {char_count:,}\n")
                     f.write(f"- **Parole totali:** {word_count:,}\n")
                     f.write(f"- **Tempo stimato:** {estimated_time} minuti\n")
@@ -550,12 +550,12 @@ python universal_translator.py --regenerate-template
         tracker_path = project_folder / "progress_tracker.md"
         
         with open(tracker_path, 'w', encoding='utf-8') as f:
-            f.write("# [CHART] TRACKER PROGRESSO TRADUZIONE\n\n")
+            f.write("# 📊 TRACKER PROGRESSO TRADUZIONE\n\n")
             
             total_chars = sum(len(ch['text']) for ch in chapters.values())
             total_words = sum(len(ch['text'].split()) for ch in chapters.values())
             
-            f.write(f"## [STATS] Statistiche Globali\n")
+            f.write(f"## 📈 Statistiche Globali\n")
             f.write(f"- **Capitoli totali:** {len(chapters)}\n")
             f.write(f"- **Caratteri totali:** {total_chars:,}\n") 
             f.write(f"- **Parole totali:** {total_words:,}\n")
@@ -569,26 +569,26 @@ python universal_translator.py --regenerate-template
                 char_count = len(chapter_data['text'])
                 f.write(f"| {chapter_id} | {chapter_data['title']} | {char_count:,} | ⏳ Da fare | |\n")
             
-            f.write("\n## [TARGET] Legenda Stati\n")
+            f.write("\n## 🎯 Legenda Stati\n")
             f.write("- ⏳ Da fare\n")
-            f.write("- [PROCESS] In corso\n")
-            f.write("- [OK] Completato\n")
-            f.write("- [SEARCH] In revisione\n")
+            f.write("- 🔄 In corso\n")
+            f.write("- ✅ Completato\n")
+            f.write("- 🔍 In revisione\n")
 
     def process_single_file(self, file_path):
         """Processa singolo file (PDF o EPUB)"""
-        print(f"\n[TARGET] Processando: {file_path.name}")
+        print(f"\n🎯 Processando: {file_path.name}")
         
         # Estrai titolo e determina tipo
         title = self.extract_title_from_filename(file_path)
         file_type = file_path.suffix[1:].lower()  # pdf o epub
         
-        print(f"[BOOK] Titolo rilevato: {title}")
-        print(f"[FILE] Formato: {file_type.upper()}")
+        print(f"📚 Titolo rilevato: {title}")
+        print(f"📄 Formato: {file_type.upper()}")
         
         # Crea cartella progetto
         project_folder = self.create_project_folder(title, file_type)
-        print(f"[FOLDER] Progetto creato: {project_folder.name}")
+        print(f"📁 Progetto creato: {project_folder.name}")
         
         # Inizializza chapters come None
         chapters = None
@@ -603,14 +603,14 @@ python universal_translator.py --regenerate-template
             chapters = self.extract_epub_text(file_path)
             
         else:
-            print(f"[ERROR] Formato non supportato: {file_type}")
+            print(f"❌ Formato non supportato: {file_type}")
             return False
         
         if not chapters:
-            print(f"[ERROR] Impossibile estrarre contenuto da {file_path.name}")
+            print(f"❌ Impossibile estrarre contenuto da {file_path.name}")
             return False
         
-        print(f"[OK] Rilevati {len(chapters)} capitoli")
+        print(f"✅ Rilevati {len(chapters)} capitoli")
         
         # Crea tutti i file del progetto
         template_path = self.create_translation_template(project_folder, title, chapters, file_type)
@@ -627,14 +627,14 @@ python universal_translator.py --regenerate-template
                 f.write(chapter_data['text'])
                 f.write("\n\n" + "="*50 + "\n\n")
         
-        print(f"[OK] Progetto completato: {project_folder.name}")
-        print(f"[NOTE] Template principale: template_traduzione.md")
+        print(f"✅ Progetto completato: {project_folder.name}")
+        print(f"📝 Template principale: template_traduzione.md")
         
         return True
 
     def process_all_files(self):
         """Processa tutti i file nella cartella input"""
-        print("[ROCKET] UNIVERSAL LIGHT NOVEL TRANSLATOR")
+        print("🚀 UNIVERSAL LIGHT NOVEL TRANSLATOR")
         print("=" * 50)
         
         # Scansiona file
@@ -643,7 +643,7 @@ python universal_translator.py --regenerate-template
         if not files:
             return
         
-        print(f"\n[BOOK] Trovati {len(files)} file da processare")
+        print(f"\n📚 Trovati {len(files)} file da processare")
         
         successful = 0
         failed = 0
@@ -655,16 +655,16 @@ python universal_translator.py --regenerate-template
                 else:
                     failed += 1
             except Exception as e:
-                print(f"[ERROR] Errore processando {file_path.name}: {e}")
+                print(f"❌ Errore processando {file_path.name}: {e}")
                 failed += 1
         
-        print(f"\n[SUCCESS] RISULTATI FINALI:")
-        print(f"[OK] Successi: {successful}")
-        print(f"[ERROR] Fallimenti: {failed}")
-        print(f"[FOLDER] Progetti creati in: {self.output_folder.absolute()}")
+        print(f"\n🎉 RISULTATI FINALI:")
+        print(f"✅ Successi: {successful}")
+        print(f"❌ Fallimenti: {failed}")
+        print(f"📁 Progetti creati in: {self.output_folder.absolute()}")
         
         if successful > 0:
-            print(f"\n[TIP] Apri le cartelle progetti e inizia con template_traduzione.md!")
+            print(f"\n💡 Apri le cartelle progetti e inizia con template_traduzione.md!")
 
 def main():
     """Funzione principale"""
@@ -676,11 +676,11 @@ def main():
     input_folder = Path("input_books")
     input_folder.mkdir(exist_ok=True)
     
-    print(f"[FOLDER] Cartella input: {input_folder.absolute()}")
-    print("[TIP] Inserisci file PDF/EPUB nella cartella 'input_books'")
+    print(f"📁 Cartella input: {input_folder.absolute()}")
+    print("💡 Inserisci file PDF/EPUB nella cartella 'input_books'")
     
     if not any(input_folder.iterdir()):
-        print("\n[ERROR] Cartella input vuota!")
+        print("\n❌ Cartella input vuota!")
         print("📥 Aggiungi file PDF o EPUB e riprova")
         return
     

@@ -137,7 +137,7 @@ class TranslationEditorGUI:
         
         project_label = self.styles.create_label(
             info_frame,
-            f"📚 {self.project_name}",
+            f"[BOOK] {self.project_name}",
             'header'
         )
         project_label.pack(side='left')
@@ -163,11 +163,11 @@ class TranslationEditorGUI:
         
         # Navigation buttons
         nav_buttons = [
-            ("◀ Precedente", self.prev_chapter, 'normal'),
-            ("▶ Successivo", self.next_chapter, 'normal'),
-            ("💾 Salva", self.manual_save, 'primary'),
-            ("✅ Completa", self.mark_complete, 'success'),
-            ("🔄 Aggiorna Tracker", self.update_tracker, 'normal')
+            ("< Precedente", self.prev_chapter, 'normal'),
+            ("> Successivo", self.next_chapter, 'normal'),
+            ("[SAVE] Salva", self.manual_save, 'primary'),
+            ("[OK] Completa", self.mark_complete, 'success'),
+            ("[UPDATE] Aggiorna Tracker", self.update_tracker, 'normal')
         ]
         
         for text, command, style in nav_buttons:
@@ -190,7 +190,7 @@ class TranslationEditorGUI:
         
         self.styles.create_label(
             orig_header,
-            "📖 TESTO ORIGINALE",
+            "[READ] TESTO ORIGINALE",
             'header'
         ).pack(side='left')
         
@@ -209,11 +209,6 @@ class TranslationEditorGUI:
         self.original_text = self.styles.create_text(left_frame, state='disabled')
         self.original_text.pack(fill='both', expand=True)
         
-        # Scrollbar originale
-        orig_scroll = ttk.Scrollbar(left_frame, command=self.original_text.yview)
-        self.original_text.configure(yscrollcommand=orig_scroll.set)
-        orig_scroll.pack(side='right', fill='y')
-        
         # Frame destro - Traduzione
         right_frame = self.styles.create_frame(paned, 'main')
         paned.add(right_frame, weight=1)
@@ -224,7 +219,7 @@ class TranslationEditorGUI:
         
         self.styles.create_label(
             trans_header,
-            "🇮🇹 TRADUZIONE ITALIANA",
+            "[IT] TRADUZIONE ITALIANA",
             'header'
         ).pack(side='left')
         
@@ -242,28 +237,46 @@ class TranslationEditorGUI:
         self.translation_text.bind('<KeyRelease>', self.on_text_change)
         self.translation_text.bind('<Button-1>', self.on_text_change)
         
-        # Scrollbar traduzione
-        trans_scroll = ttk.Scrollbar(right_frame, command=self.translation_text.yview)
-        self.translation_text.configure(yscrollcommand=trans_scroll.set)
-        trans_scroll.pack(side='right', fill='y')
-        
-        # Sincronizza scrolling
+        # Sincronizza scrolling DOPO aver creato i widget
         self.sync_scrollbars()
         
         self.paned = paned
     
     def sync_scrollbars(self):
         """Sincronizza scrolling tra i due pannelli"""
-        def sync_scroll(*args):
-            # Sincronizza posizione scroll
-            self.original_text.yview_moveto(args[0])
-            self.translation_text.yview_moveto(args[0])
+        def sync_original_to_translation(*args):
+            """Sincronizza scroll da originale a traduzione"""
+            if len(args) >= 2:
+                # args[0] è la posizione top, args[1] è bottom
+                self.translation_text.yview_moveto(float(args[0]))
         
-        # Bind a entrambi i text widget
+        def sync_translation_to_original(*args):
+            """Sincronizza scroll da traduzione a originale"""
+            if len(args) >= 2:
+                # args[0] è la posizione top, args[1] è bottom  
+                self.original_text.yview_moveto(float(args[0]))
+        
+        # Configura scrollbars separate per evitare ricorsioni
+        v_scroll_orig = ttk.Scrollbar(self.original_text.master, orient='vertical')
+        v_scroll_trans = ttk.Scrollbar(self.translation_text.master, orient='vertical')
+        
+        # Configura scroll originale
         self.original_text.configure(yscrollcommand=lambda *args: [
-            self.original_text.tk.call(self.original_text.cget('yscrollcommand'), *args),
-            sync_scroll(*args)
+            v_scroll_orig.set(*args),
+            sync_original_to_translation(*args)
         ])
+        v_scroll_orig.configure(command=self.original_text.yview)
+        
+        # Configura scroll traduzione
+        self.translation_text.configure(yscrollcommand=lambda *args: [
+            v_scroll_trans.set(*args), 
+            sync_translation_to_original(*args)
+        ])
+        v_scroll_trans.configure(command=self.translation_text.yview)
+        
+        # Pack scrollbars
+        v_scroll_orig.pack(side='right', fill='y')
+        v_scroll_trans.pack(side='right', fill='y')
     
     def create_status_bar(self, parent):
         """Crea status bar"""
@@ -281,7 +294,7 @@ class TranslationEditorGUI:
         # Indicatori auto-save
         self.auto_save_label = self.styles.create_label(
             status_frame,
-            "💾 Auto-save: ON",
+            "[SAVE] Auto-save: ON",
             'small'
         )
         self.auto_save_label.pack(side='right', padx=(10, 0))

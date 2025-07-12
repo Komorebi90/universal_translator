@@ -234,49 +234,53 @@ echo ═══════════════════
 echo.
 
 echo 🔍 Test import moduli GUI...
-python -c "
-try:
-    import tkinter as tk
-    print('✅ tkinter OK')
-    
-    import styles
-    print('✅ styles.py OK')
-    
-    import handler  
-    print('✅ handler.py OK')
-    
-    import autosave
-    print('✅ autosave.py OK')
-    
-    print('🎉 Tutti i moduli GUI funzionanti!')
-    
-except ImportError as e:
-    print(f'❌ Errore import: {e}')
-except Exception as e:
-    print(f'❌ Errore: {e}')
-"
+python -c "import tkinter; print('✅ tkinter OK')" 2>nul
+if %errorlevel% neq 0 (
+    echo ❌ tkinter NON disponibile
+    goto TEST_FAILED
+)
 
+python -c "import styles; print('✅ styles.py OK')" 2>nul
+if %errorlevel% neq 0 (
+    echo ❌ styles.py NON trovato
+    goto TEST_FAILED
+)
+
+python -c "import handler; print('✅ handler.py OK')" 2>nul
+if %errorlevel% neq 0 (
+    echo ❌ handler.py NON trovato
+    goto TEST_FAILED
+)
+
+python -c "import autosave; print('✅ autosave.py OK')" 2>nul
+if %errorlevel% neq 0 (
+    echo ❌ autosave.py NON trovato
+    goto TEST_FAILED
+)
+
+echo 🎉 Tutti i moduli GUI funzionanti!
 echo.
+
 echo 🔍 Test creazione finestra GUI...
-python -c "
-import tkinter as tk
-try:
-    root = tk.Tk()
-    root.title('Test GUI')
-    root.geometry('300x200')
-    
-    label = tk.Label(root, text='✅ GUI Test OK!', font=('Calibri', 12))
-    label.pack(expand=True)
-    
-    root.after(2000, root.destroy)  # Chiudi dopo 2 secondi
-    root.mainloop()
-    
-    print('✅ Test finestra GUI completato')
-except Exception as e:
-    print(f'❌ Errore test GUI: {e}')
-"
+python -c "import tkinter as tk; root=tk.Tk(); root.title('Test'); root.geometry('200x100'); root.after(1000, root.destroy); root.mainloop(); print('✅ Test finestra OK')" 2>nul
+
+if %errorlevel% equ 0 (
+    echo ✅ Test finestra GUI completato
+) else (
+    echo ❌ Errore test finestra GUI
+    goto TEST_FAILED
+)
 
 echo.
+echo 🎉 TUTTI I TEST SUPERATI!
+echo 🚀 Sistema GUI pronto per l'uso
+pause
+goto MAIN_MENU
+
+:TEST_FAILED
+echo.
+echo ❌ ALCUNI TEST FALLITI
+echo 💡 Esegui 'Setup Dipendenze GUI' prima
 pause
 goto MAIN_MENU
 

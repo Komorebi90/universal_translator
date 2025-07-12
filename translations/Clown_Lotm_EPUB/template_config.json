@@ -1,0 +1,14 @@
+{
+  "auto_split_long_chapters": true,
+  "highlight_important_passages": true,
+  "include_full_text": true,
+  "include_glossary_hints": true,
+  "include_notes_section": true,
+  "include_page_references": true,
+  "include_progress_tracking": true,
+  "include_stats": true,
+  "max_section_size": 6000,
+  "split_threshold": 8000,
+  "target_section_size": 4000,
+  "use_section_dividers": true
+}
