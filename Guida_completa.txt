@@ -1,0 +1,189 @@
+# 📁 GUIDA COMPLETA FILE SISTEMA
+
+## 🎯 File Principali (ESSENZIALI)
+
+### 1. **universal_translator.py** 
+- **Cosa fa**: Motore principale, estrae testo da PDF/EPUB e crea progetti
+- **Quando usare**: `python universal_translator.py`
+- **Dimensione**: ~15KB, ~400 righe di codice
+
+### 2. **universal_launcher.bat**
+- **Cosa fa**: Interface Windows con menu grafico
+- **Quando usare**: Double-click per aprire il menu principale
+- **Dimensione**: ~8KB, launcher user-friendly
+
+### 3. **README.md**
+- **Cosa fa**: Documentazione completa del progetto
+- **Quando usare**: Per capire come funziona tutto
+- **Dimensione**: ~25KB, guida completa
+
+## 🎛️ File Smart Tracker (OPZIONALI ma raccomandati)
+
+### 4. **smart_tracker_system.py**
+- **Cosa fa**: Sistema monitoraggio automatico progresso traduzioni
+- **Quando usare**: Automaticamente chiamato dai progetti
+- **Dimensione**: ~12KB, tracking avanzato
+
+### 5. **tracker_manager.py** 
+- **Cosa fa**: Gestione globale di tutti i progetti, dashboard
+- **Quando usare**: `python tracker_manager.py dashboard`
+- **Dimensione**: ~8KB, gestione multi-progetto
+
+### 6. **template_updater.py**
+- **Cosa fa**: Aggiorna progetti esistenti con nuovo formato template
+- **Quando usare**: `python template_updater.py` (una volta sola)
+- **Dimensione**: ~6KB, utility aggiornamento
+
+## 🧪 File Test e Utility (OPZIONALI)
+
+### 7. **test_universal.py**
+- **Cosa fa**: Testa tutte le dipendenze e funzionalità del sistema
+- **Quando usare**: `python test_universal.py` per verificare installazione
+- **Dimensione**: ~4KB, diagnostica sistema
+
+## 📦 Struttura Cartelle (Create automaticamente)
+
+```
+universal_translator/
+├── 📄 universal_translator.py      # ← File principale
+├── 🖥️ universal_launcher.bat       # ← Interface Windows  
+├── 📚 README.md                    # ← Documentazione
+├── 🎛️ smart_tracker_system.py     # ← Tracking automatico
+├── 📊 tracker_manager.py           # ← Gestione globale
+├── 🔄 template_updater.py          # ← Aggiornatore template
+├── 🧪 test_universal.py            # ← Test sistema
+├── 📁 input_books/                 # ← Metti qui PDF/EPUB (auto-creata)
+└── 📁 translations/                # ← Progetti creati (auto-creata)
+    ├── Mushoku_Tensei_Vol1_PDF/
+    ├── Overlord_Volume1_EPUB/
+    └── ...
+```
+
+## ⚡ Setup Rapido (30 secondi)
+
+### Scenario 1: Setup Minimo (Solo traduzione base)
+```bash
+# File necessari:
+- universal_translator.py
+- universal_launcher.bat  
+- README.md
+
+# Avvio:
+1. Double-click universal_launcher.bat
+2. Scegli [4] Setup e Dipendenze
+3. Metti file in input_books/
+4. Scegli [1] Processa Tutti i File
+```
+
+### Scenario 2: Setup Completo (Con tracking avanzato)
+```bash
+# File necessari: TUTTI i 7 file sopra
+
+# Avvio:
+1. Double-click universal_launcher.bat
+2. Scegli [4] Setup e Dipendenze  
+3. Scegli [6] Smart Tracker → Setup Tracker
+4. Metti file in input_books/
+5. Scegli [1] Processa Tutti i File
+6. Scegli [7] Dashboard Globale per monitorare
+```
+
+## 🔧 File Generati Automaticamente
+
+### Per ogni progetto creato:
+```
+translations/NomeProgetto_PDF/
+├── 📝 template_traduzione.md       # ← FILE PRINCIPALE per tradurre
+├── 📊 progress_tracker.md          # ← Tracker manuale
+├── ℹ️ info_progetto.md             # ← Info metadata  
+├── 🎛️ smart_tracker.py            # ← Script tracking progetto
+├── 🖥️ tracker.bat                 # ← Interface tracker Windows
+├── 📊 smart_tracker.json          # ← Database progresso (auto)
+├── 📈 statistiche_live.md         # ← Report live (auto-generato)
+├── 📁 originale/                   # ← Backup testo estratto
+├── 📁 capitoli/                    # ← Capitoli singoli
+└── 📁 traduzione/                  # ← Risultato finale
+```
+
+### File globali generati:
+```
+translations/
+├── 📊 dashboard_globale.md         # ← Overview tutti progetti
+└── [progetti individuali...]
+```
+
+## 🎯 Workflow File per Traduttore
+
+### 1. **Setup Sistema** (una volta sola)
+- Scarica i 7 file Python/Batch + README
+- Esegui `universal_launcher.bat` → Setup
+
+### 2. **Nuovo Progetto** (per ogni libro)
+- Metti PDF/EPUB in `input_books/`
+- Launcher → Processa Tutti i File
+- Risultato: cartella progetto completa
+
+### 3. **Traduzione** (lavoro quotidiano)
+- Apri: `translations/MioProgetto/template_traduzione.md`
+- Traduci sezione per sezione nel template
+- Tracker aggiorna automaticamente progresso
+
+### 4. **Monitoraggio** (opzionale)
+- Launcher → Dashboard Globale
+- Vedi progresso di tutti i progetti insieme
+- Statistiche velocità e stime tempo
+
+## 💡 Suggerimenti Organizzazione
+
+### Cartella Principale:
+```
+📁 MieTraduzioni/
+├── 📄 [7 file sistema Python/Batch]
+├── 📚 README.md
+├── 📁 input_books/
+│   ├── Mushoku Tensei Vol 1.pdf
+│   ├── Overlord Volume 1.epub
+│   └── Re Zero Arc 1.pdf
+└── 📁 translations/
+    ├── 📊 dashboard_globale.md
+    ├── Mushoku_Tensei_Vol1_PDF/
+    ├── Overlord_Volume1_EPUB/
+    └── Re_Zero_Arc1_PDF/
+```
+
+### Backup Raccomandato:
+- **Cartella completa** su cloud (Google Drive, OneDrive)
+- **File sistema** (7 file Python/Batch) su GitHub privato
+- **Progetti traduzione** backup settimanale
+
+## 🚨 File da NON perdere mai:
+
+### Priorità MASSIMA:
+1. `template_traduzione.md` di ogni progetto (il tuo lavoro!)
+2. `smart_tracker.json` di ogni progetto (progresso!)
+
+### Priorità ALTA:
+3. `translations/` intera cartella (tutti i progetti)
+4. I 7 file sistema Python/Batch (ricreare il sistema)
+
+### Priorità MEDIA:
+5. `input_books/` (file originali, ricaricabili)
+6. File di backup e log
+
+---
+
+## 🎉 Risultato Finale
+
+Con questi file hai un sistema professionale completo che:
+
+✅ **Processa automaticamente** qualsiasi PDF/EPUB
+✅ **Organizza progetti** strutturati e professionali  
+✅ **Monitora progresso** con statistiche live
+✅ **Interface user-friendly** per tutto
+✅ **Backup automatico** di ogni cosa
+✅ **Scalabilità** per decine di progetti
+✅ **Documentazione completa** per ogni scenario
+
+**Tempo setup totale: 30 secondi**  
+**Tempo per nuovo progetto: 2 minuti**  
+**Tutto il resto è automatico!** 🌟📚⚡
